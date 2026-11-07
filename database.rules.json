@@ -9,7 +9,7 @@
             ".read": "auth != null && auth.uid == $uid",
             ".write": "auth != null && auth.uid == $uid && root.child('rooms').child($room).child('phase').val() == 'lobby' && data.child('status').val() != 'accepted' && newData.hasChildren(['name']) && !newData.child('status').exists()",
             "name": {
-              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
+              ".validate": "newData.isString() && newData.val().length < 25 && newData.val() != ''"
             },
             "status": {
               ".validate": "newData.val() == 'accepted' || newData.val() == 'rejected'"

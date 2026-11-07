@@ -8,7 +8,7 @@ Dette er en statisk GitHub Pages-side med Firebase Realtime Database og anonym i
 2. Legg til en **Web app** (ikonet `</>`). Kopier `firebaseConfig`-verdiene til `firebase-config.js`.
 3. I **Authentication → Sign-in method** aktiver **Anonymous**.
 4. I **Realtime Database** opprett database og kopier dens URL til `databaseURL` i `firebase-config.js`.
-5. I **Realtime Database → Rules** lim inn innholdet fra `database.rules.json` og publiser reglene. Merk: Dette er demonstrasjonsregler, ikke produksjonssikkerhet. Alle anonyme innloggede klienter kan lese og skrive spillrom. Ikke legg inn sensitive opplysninger.
+5. I **Realtime Database → Rules**, lim inn innholdet fra `database.rules.json` og publiser. Vert og innmeldte spillere kan lese rommet. Verten styrer spillstatusen, og hver spiller skriver sin egen innmeldingsforespørsel og sine egne svar.
 6. I dette repositoriet publiseres siden fra `main` og `/ (root)` under **Settings → Pages**.
 7. Etter publisering åpner spillerne `https://henhansen-max.github.io/kveldens-dummeste/` på mobilene.
 
@@ -22,4 +22,4 @@ Dette er en statisk GitHub Pages-side med Firebase Realtime Database og anonym i
 
 ## Begrensninger før offentlig bruk
 
-Firebase-reglene i pakken er åpne for alle anonyme brukere. Dette er en enkel prototype og kan manipuleres. For offentlig eller kommersiell lansering må autorisasjon, serverstyrt tidtaking, datavalidering, opprydding av gamle rom og misbruksvern flyttes til en sikker backend. Gratisnivåer kan ha kvoter.
+Spillverten styrer rundene fra sin egen telefon. Romkoden kan deles med dem som skal spille. For offentlig eller kommersiell bruk bør rundestyring, fasit og poengberegning flyttes til en backend, og gamle rom bør ryddes automatisk.

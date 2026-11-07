@@ -1,1 +1,42 @@
-{"rules": {"rooms": {"$room": {".read": "auth != null", ".write": "auth != null"}}}}
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": "auth != null && (!data.exists() || data.child('host').val() == auth.uid || data.child('players').child(auth.uid).exists())",
+        ".write": "auth != null && newData.child('host').val() == auth.uid && (!data.exists() || data.child('host').val() == auth.uid)",
+        "requests": {
+          "$uid": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid && root.child('rooms').child($room).child('phase').val() == 'lobby' && data.child('status').val() != 'accepted' && newData.hasChildren(['name']) && !newData.child('status').exists()",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
+            },
+            "status": {
+              ".validate": "newData.val() == 'accepted' || newData.val() == 'rejected'"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "submissions": {
+          "$uid": {
+            ".write": "auth != null && auth.uid == $uid && !data.exists() && root.child('rooms').child($room).child('players').child($uid).child('active').val() == true && root.child('rooms').child($room).child('phase').val() == 'question' && newData.hasChildren(['answer', 'deadline', 'sent']) && newData.child('deadline').val() == root.child('rooms').child($room).child('deadline').val() && now < newData.child('deadline').val() && newData.child('sent').val() == now",
+            "answer": {
+              ".validate": "newData.val() == 0 || newData.val() == 1 || newData.val() == 2 || newData.val() == 3"
+            },
+            "deadline": {
+              ".validate": "newData.isNumber()"
+            },
+            "sent": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

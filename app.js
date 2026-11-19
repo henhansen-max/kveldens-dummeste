@@ -1,5 +1,5 @@
 import {firebaseConfig} from './firebase-config.js';
-import {questions, questionPools} from './questions.js?v=2';
+import {questions, questionPools} from './questions.js?v=3';
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {getAuth,signInAnonymously,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {getDatabase,ref,onValue,runTransaction,get,set,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
@@ -11,12 +11,22 @@ const difficultyLabels = { easy: 'Lett', medium: 'Middels', hard: 'Vanskelig' };
 const defaultDifficulty = 'medium';
 let selectedDifficulty;
 
-function makeQuestionDeck(difficulty) {
-  const deck = [...questionPools[difficulty]];
+function shuffle(deck) {
   for (let index = deck.length - 1; index > 0; index--) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
     [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
   }
+  return deck;
+}
+
+function makeQuestionDeck(difficulty) {
+  const pool = questionPools[difficulty];
+  const deck = shuffle(pool.filter(index => !questions[index][3]));
+  const pictureQuestions = shuffle(pool.filter(index => questions[index][3]));
+  pictureQuestions.forEach((questionIndex, round) => {
+    const position = round * QUESTIONS_PER_ROUND + Math.floor(Math.random() * QUESTIONS_PER_ROUND);
+    deck.splice(position, 0, questionIndex);
+  });
   return deck;
 }
 
@@ -118,14 +128,29 @@ function admitPlayers(value) {
   value.players = players;
 }
 
+function leaveRoom() {
+  if (unsub) unsub();
+  unsub = null;
+  state = null;
+  room = null;
+  selectedDifficulty = undefined;
+  localStorage.removeItem('dummeste-room');
+  home();
+}
+
+function renderQuestionImage(image) {
+  if (!image) return '';
+  return `<img class="question-image" id="question-image" src="${esc(image.src)}" alt="${esc(image.clue)}" referrerpolicy="no-referrer"><p class="notice" id="question-clue" hidden>${esc(image.clue)}</p>`;
+}
+
 function listen(){
   if (unsub) unsub();
-  unsub = onValue(ref(db, 'rooms/' + room), snapshot => {
+  const listeningRoom = room;
+  unsub = onValue(ref(db, 'rooms/' + listeningRoom), snapshot => {
+    if (room !== listeningRoom) return;
     state = snapshot.val();
     if (!state) {
-      room = null;
-      localStorage.removeItem('dummeste-room');
-      home();
+      leaveRoom();
       return;
     }
     render();
@@ -133,6 +158,7 @@ function listen(){
       advance();
     }
   }, error => {
+    if (room !== listeningRoom) return;
     console.error(error);
     msg('Kunne ikke åpne spillrommet. Sjekk romkoden og prøv igjen.');
   });
@@ -140,9 +166,30 @@ function listen(){
 
 function render(){if(!state)return home();const p=current(),host=state.host===uid;let html=`<div class="top"><span>Rom <strong>${esc(room)}</strong></span><span>${active().length} aktive / ${Object.keys(state.players||{}).length} spillere</span></div>`;
 if(state.phase==='lobby'){html+=`<div class="code">${esc(room)}</div><p class="small">Del denne romkoden og nettadressen med vennene dine.</p><div class="players">${Object.values(state.players||{}).map(x=>`<span class="chip">${esc(x.name)}</span>`).join('')}</div>`;if(!p)html+=`<input id="name" placeholder="Ditt navn" maxlength="24"><button id="selfjoin">${host?'Bli med som spiller':'Bli med'}</button>`;if(host)html+=`${renderDifficultyPicker()}<button id="start" ${Object.keys(state.players||{}).length<2?'disabled':''}>Start spillet</button>`;else html+='<p class="muted">Venter på at spillet starter …</p>';
-}else if(state.phase==='question'){const q=questions[state.deck[state.index]];html+=`<div class="top"><span>Runde ${state.round} · Oppgave ${state.qnum+1}/${questionsPerRound(state)}</span><span class="timer" id="timer">${remaining()} s</span></div><div class="question">${esc(q[0])}</div>`;if(p?.active){const answer=state.submissions?.[uid]?.answer;html+=q[1].map((o,i)=>`<button class="option ${answer===i?'selected':''}" data-answer="${i}" ${answer!==undefined?'disabled':''}>${esc(o)}</button>`).join('');if(answer!==undefined)html+='<p class="muted">Svaret er registrert. Venter på de andre …</p>';}else html+='<p class="muted">Du er ute, men kan følge resten av spillet.</p>';
+}else if(state.phase==='question'){const q=questions[state.deck[state.index]];html+=`<div class="top"><span>Runde ${state.round} · Oppgave ${state.qnum+1}/${questionsPerRound(state)}</span><span class="timer" id="timer">${remaining()} s</span></div><div class="question">${esc(q[0])}</div>${renderQuestionImage(q[3])}`;if(p?.active){const answer=state.submissions?.[uid]?.answer;html+=q[1].map((o,i)=>`<button class="option ${answer===i?'selected':''}" data-answer="${i}" ${answer!==undefined?'disabled':''}>${esc(o)}</button>`).join('');if(answer!==undefined)html+='<p class="muted">Svaret er registrert. Venter på de andre …</p>';}else html+='<p class="muted">Du er ute, men kan følge resten av spillet.</p>';
 }else if(state.phase==='reveal'||state.phase==='elimination'){html+=`<h2>${state.phase==='elimination'?'En spiller ryker ut!':'Fasit'}</h2><div class="notice">${esc(state.lastText||'')}</div><p class="muted">Neste oppgave starter automatisk …</p>`;
-}else if(state.phase==='finished'){const winner=active()[0]?.[1]?.name||'Ukjent';html+=`<h2>Spillet er ferdig!</h2><div class="winner">🏆 ${esc(winner)}</div><p class="muted">Gratulerer! Du er kveldens dummeste.</p>`;if(host)html+='<button id="reset">Nytt spill med samme gjeng</button>';}html+=`<div class="line"><div class="players">${Object.values(state.players||{}).map(x=>`<span class="chip ${x.active?'':'out'}">${esc(x.name)}${state.phase!=='lobby'&&x.active?' · '+(x.points||0)+' p':''}</span>`).join('')}</div></div>`;el.innerHTML=html;
+}else if(state.phase==='finished'){const winner=active()[0]?.[1]?.name||'Ukjent';html+=`<h2>Spillet er ferdig!</h2><div class="winner">🏆 ${esc(winner)}</div><p class="muted">Gratulerer! Du er kveldens dummeste.</p>`;if(host)html+='<button id="reset">Nytt spill med samme gjeng</button>';}
+const leaveLabel = state.phase === 'finished' ? 'Avslutt spillet' : 'Forlat spillrommet';
+html+=`<button class="secondary" id="leave-room">${leaveLabel}</button>`;
+html+=`<div class="line"><div class="players">${Object.values(state.players||{}).map(x=>`<span class="chip ${x.active?'':'out'}">${esc(x.name)}${state.phase!=='lobby'&&x.active?' · '+(x.points||0)+' p':''}</span>`).join('')}</div></div>`;el.innerHTML=html;
+
+document.getElementById('leave-room').onclick = () => {
+  const gameIsRunning = !['lobby', 'finished'].includes(state.phase);
+  if (host && gameIsRunning && !window.confirm('Spillet stopper for de andre hvis du forlater rommet. Vil du fortsette?')) return;
+  leaveRoom();
+};
+
+const picture = document.getElementById('question-image');
+if (picture) {
+  const clue = document.getElementById('question-clue');
+  const showClue = () => {
+    picture.hidden = true;
+    clue.hidden = false;
+  };
+  picture.addEventListener('error', showClue, {once: true});
+  if (picture.complete && !picture.naturalWidth) showClue();
+}
+
 const self=document.getElementById('selfjoin');if(self)self.onclick=async()=>{const name=document.getElementById('name').value.trim();if(!name)return;try {
   if (!await joinRoom(room, name)) msg('Navnet er opptatt, eller rommet er fullt.');
 } catch (error) {

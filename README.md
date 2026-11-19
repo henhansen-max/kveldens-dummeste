@@ -18,9 +18,20 @@ Dette er en statisk GitHub Pages-side med Firebase Realtime Database og anonym i
 - Fem spørsmål per runde, med opptil 20 sekunder per spørsmål. Fasiten vises så snart alle aktive spillere har svart, eller når tiden går ut.
 - Den som får flest riktige, ryker ut. Ved likhet teller raskest svartid, deretter påloggingsrekkefølge.
 - Spillvertens telefon styrer tid og rundeskifter automatisk og må være pålogget.
-- Verten velger Lett, Middels eller Vanskelig før start. Hvert nivå har 40 spørsmål, som trekkes uten gjentakelser i samme spill.
+- Verten velger Lett, Middels eller Vanskelig før start. Hvert nivå har 100 spørsmål, inkludert to bildeoppgaver. Ingen spørsmål gjentas i samme spill.
 - Spillet er uoffisielt.
 
 ## Begrensninger før offentlig bruk
 
 Spillverten styrer rundene fra sin egen telefon. Romkoden kan deles med dem som skal spille. For offentlig eller kommersiell bruk bør rundestyring, fasit og poengberegning flyttes til en backend, og gamle rom bør ryddes automatisk.
+
+## Bildekilder
+
+Bildene vises fra Wikimedia Commons. Opphav og lisens per bilde:
+
+- [Rødrev](https://commons.wikimedia.org/wiki/File:Vulpes_vulpes_ssp_fulvus.jpg), Joanne Redwood, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+- [Eiffeltårnet](https://commons.wikimedia.org/wiki/File:Eiffel_Tower,Paris.jpg), Commonists, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- [Koala](https://commons.wikimedia.org/wiki/File:Koala_climbing_tree.jpg), Diliff, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- [Colosseum](https://commons.wikimedia.org/wiki/File:Colosseum_in_Rome,_Italy_-_April_2007.jpg), Diliff, [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/).
+- [Axolotl](https://commons.wikimedia.org/wiki/File:Axolotl.jpg), Erzengel, public domain.
+- [Al-Khazneh, Petra](https://commons.wikimedia.org/wiki/File:Al_Khazneh_Petra_edit_2.jpg), Graham Racher, perspektiv korrigert av MrPanyGoff, [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).

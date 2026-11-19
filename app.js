@@ -41,7 +41,7 @@ function renderDifficultyPicker() {
   ).join('');
   return `<label class="difficulty-label" for="difficulty">Vanskelighetsnivå</label><select id="difficulty">${options}</select>`;
 }
-const QUESTIONS_PER_ROUND = 5;
+const QUESTIONS_PER_ROUND = 10;
 const QUESTION_TIME_MS = 20_000;
 
 const current=()=>state?.players?.[uid];

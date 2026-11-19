@@ -15,10 +15,10 @@ Dette er en statisk GitHub Pages-side med Firebase Realtime Database og anonym i
 ## Spilleregler
 
 - 2–8 spillere. Felles romkode på seks tegn; hver telefon identifiseres av en unik anonym Firebase-bruker.
-- Ti spørsmål per runde, med opptil 20 sekunder per spørsmål. Fasiten vises så snart alle aktive spillere har svart, eller når tiden går ut.
+- Ti spørsmål per runde, med opptil 20 sekunder per spørsmål. Fasiten vises så snart alle aktive spillere har svart, eller når tiden går ut. Fasiten og rundepoengene vises i 7 sekunder før spillet går videre.
 - Den som får flest riktige, ryker ut. Ved likhet teller raskest svartid, deretter påloggingsrekkefølge.
 - Spillvertens telefon styrer tid og rundeskifter automatisk og må være pålogget.
-- Verten velger Lett, Middels eller Vanskelig før start. Hvert nivå har 100 spørsmål, inkludert to bildeoppgaver. Ingen spørsmål gjentas i samme spill.
+- Verten velger Lett, Middels eller Vanskelig før start. Hvert nivå har 1000 spørsmål, inkludert to bildeoppgaver. Ingen spørsmål gjentas i samme spill.
 - Spillet er uoffisielt.
 
 ## Begrensninger før offentlig bruk
@@ -35,3 +35,5 @@ Bildene vises fra Wikimedia Commons. Opphav og lisens per bilde:
 - [Colosseum](https://commons.wikimedia.org/wiki/File:Colosseum_in_Rome,_Italy_-_April_2007.jpg), Diliff, [CC BY-SA 2.5](https://creativecommons.org/licenses/by-sa/2.5/).
 - [Axolotl](https://commons.wikimedia.org/wiki/File:Axolotl.jpg), Erzengel, public domain.
 - [Al-Khazneh, Petra](https://commons.wikimedia.org/wiki/File:Al_Khazneh_Petra_edit_2.jpg), Graham Racher, perspektiv korrigert av MrPanyGoff, [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/).
+
+Grunnstoffenes symboler og atomnumre følger [IUPACs periodiske system](https://iupac.org/what-we-do/periodic-table-of-elements/).

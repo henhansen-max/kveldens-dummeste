@@ -4,3 +4,5 @@
 
 .question-image{display:block;width:100%;max-height:280px;object-fit:contain;border-radius:12px;background:#17162b;margin:0 0 12px}
 .question-image[hidden]{display:none}
+
+.score-title{margin:18px 0 8px;font-size:16px}.score-list{margin:0;padding:0;list-style:none}.score-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border-top:1px solid #4d4668}.score-list li>span{overflow-wrap:anywhere}.score-list li>strong{white-space:nowrap}.score-list .own-score{background:#393452;color:#ffdc83}

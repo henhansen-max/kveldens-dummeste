@@ -1,5 +1,5 @@
 import {firebaseConfig} from './firebase-config.js';
-import {questions} from './questions.js';
+import {questions, questionPools} from './questions.js?v=2';
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {getAuth,signInAnonymously,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {getDatabase,ref,onValue,runTransaction,get,set,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
@@ -7,7 +7,30 @@ const el=document.getElementById('app'),esc=s=>String(s??'').replace(/[&<>"']/g,
 const configured=!!(firebaseConfig.apiKey&&firebaseConfig.databaseURL&&firebaseConfig.projectId);
 let db,auth,uid,room=localStorage.getItem('dummeste-room'),state=null,offset=0,unsub=null,busy=false;
 const code = () => crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(-6).padStart(6, '0').toUpperCase();
-const shuffled=()=>questions.map((_,i)=>i).sort(()=>Math.random()-.5);
+const difficultyLabels = { easy: 'Lett', medium: 'Middels', hard: 'Vanskelig' };
+const defaultDifficulty = 'medium';
+let selectedDifficulty;
+
+function makeQuestionDeck(difficulty) {
+  const deck = [...questionPools[difficulty]];
+  for (let index = deck.length - 1; index > 0; index--) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];
+  }
+  return deck;
+}
+
+function lobbyDifficulty() {
+  return selectedDifficulty ?? state.difficulty ?? defaultDifficulty;
+}
+
+function renderDifficultyPicker() {
+  const selected = lobbyDifficulty();
+  const options = Object.entries(difficultyLabels).map(([value, label]) =>
+    `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`
+  ).join('');
+  return `<label class="difficulty-label" for="difficulty">Vanskelighetsnivå</label><select id="difficulty">${options}</select>`;
+}
 const QUESTIONS_PER_ROUND = 5;
 const QUESTION_TIME_MS = 20_000;
 
@@ -32,7 +55,7 @@ function msg(s){el.innerHTML=`<p class="error">${esc(s)}</p><button id="back">Ti
 function home(){el.innerHTML=`<h2>Spill fra hver deres mobil</h2><p class="muted">Lag et rom eller bli med med en seks tegn lang kode.</p><button id="create">Opprett nytt spill</button><div class="divider">ELLER</div><input id="room" placeholder="Romkode" maxlength="6" autocapitalize="characters"><input id="name" placeholder="Ditt navn" maxlength="24"><button id="join">Bli med i spillet</button><p class="small">Enheten som oppretter rommet må være tilkoblet gjennom hele spillet for å styre rundene automatisk.</p>`;document.getElementById('create').onclick=async()=>{const c=code();const r=ref(db,'rooms/'+c);try {
   const result = await runTransaction(r, value => value === null ? {
     host: uid, phase: 'lobby', created: Date.now() + offset,
-    round: 1, qnum: 0, deck: shuffled(), deadline: 0
+    round: 1, qnum: 0, deadline: 0
   } : undefined, {applyLocally: false});
   if (!result.committed) return msg('Prøv å opprette rommet på nytt.');
   room = c;
@@ -116,7 +139,7 @@ function listen(){
 }
 
 function render(){if(!state)return home();const p=current(),host=state.host===uid;let html=`<div class="top"><span>Rom <strong>${esc(room)}</strong></span><span>${active().length} aktive / ${Object.keys(state.players||{}).length} spillere</span></div>`;
-if(state.phase==='lobby'){html+=`<div class="code">${esc(room)}</div><p class="small">Del denne romkoden og nettadressen med vennene dine.</p><div class="players">${Object.values(state.players||{}).map(x=>`<span class="chip">${esc(x.name)}</span>`).join('')}</div>`;if(!p)html+=`<input id="name" placeholder="Ditt navn" maxlength="24"><button id="selfjoin">${host?'Bli med som spiller':'Bli med'}</button>`;if(host)html+=`<button id="start" ${Object.keys(state.players||{}).length<2?'disabled':''}>Start spillet</button>`;else html+='<p class="muted">Venter på at spillet starter …</p>';
+if(state.phase==='lobby'){html+=`<div class="code">${esc(room)}</div><p class="small">Del denne romkoden og nettadressen med vennene dine.</p><div class="players">${Object.values(state.players||{}).map(x=>`<span class="chip">${esc(x.name)}</span>`).join('')}</div>`;if(!p)html+=`<input id="name" placeholder="Ditt navn" maxlength="24"><button id="selfjoin">${host?'Bli med som spiller':'Bli med'}</button>`;if(host)html+=`${renderDifficultyPicker()}<button id="start" ${Object.keys(state.players||{}).length<2?'disabled':''}>Start spillet</button>`;else html+='<p class="muted">Venter på at spillet starter …</p>';
 }else if(state.phase==='question'){const q=questions[state.deck[state.index]];html+=`<div class="top"><span>Runde ${state.round} · Oppgave ${state.qnum+1}/${questionsPerRound(state)}</span><span class="timer" id="timer">${remaining()} s</span></div><div class="question">${esc(q[0])}</div>`;if(p?.active){const answer=state.submissions?.[uid]?.answer;html+=q[1].map((o,i)=>`<button class="option ${answer===i?'selected':''}" data-answer="${i}" ${answer!==undefined?'disabled':''}>${esc(o)}</button>`).join('');if(answer!==undefined)html+='<p class="muted">Svaret er registrert. Venter på de andre …</p>';}else html+='<p class="muted">Du er ute, men kan følge resten av spillet.</p>';
 }else if(state.phase==='reveal'||state.phase==='elimination'){html+=`<h2>${state.phase==='elimination'?'En spiller ryker ut!':'Fasit'}</h2><div class="notice">${esc(state.lastText||'')}</div><p class="muted">Neste oppgave starter automatisk …</p>`;
 }else if(state.phase==='finished'){const winner=active()[0]?.[1]?.name||'Ukjent';html+=`<h2>Spillet er ferdig!</h2><div class="winner">🏆 ${esc(winner)}</div><p class="muted">Gratulerer! Du er kveldens dummeste.</p>`;if(host)html+='<button id="reset">Nytt spill med samme gjeng</button>';}html+=`<div class="line"><div class="players">${Object.values(state.players||{}).map(x=>`<span class="chip ${x.active?'':'out'}">${esc(x.name)}${state.phase!=='lobby'&&x.active?' · '+(x.points||0)+' p':''}</span>`).join('')}</div></div>`;el.innerHTML=html;
@@ -126,7 +149,30 @@ const self=document.getElementById('selfjoin');if(self)self.onclick=async()=>{co
   console.error(error);
   msg('Kunne ikke koble til spillrommet. Prøv igjen.');
 }};
-const start=document.getElementById('start');if(start)start.onclick=()=>runTransaction(ref(db,'rooms/'+room),v=>{if(!v||v.host!==uid||v.phase!=='lobby')return;admitPlayers(v);if(Object.keys(v.players||{}).length<2)return v;v.phase='question';v.index=0;v.qnum=0;v.round=1;v.questionsPerRound=QUESTIONS_PER_ROUND;v.deadline=Date.now()+offset+QUESTION_TIME_MS;delete v.submissions;return v;},{applyLocally:false});
+const difficultyPicker = document.getElementById('difficulty');
+if (difficultyPicker) {
+  difficultyPicker.onchange = () => { selectedDifficulty = difficultyPicker.value; };
+}
+const start = document.getElementById('start');
+if (start) start.onclick = () => {
+  const difficulty = lobbyDifficulty();
+  const deck = makeQuestionDeck(difficulty);
+  return runTransaction(ref(db, 'rooms/' + room), game => {
+    if (!game || game.host !== uid || game.phase !== 'lobby') return;
+    admitPlayers(game);
+    if (Object.keys(game.players ?? {}).length < 2) return game;
+    game.phase = 'question';
+    game.deck = deck;
+    game.difficulty = difficulty;
+    game.index = 0;
+    game.qnum = 0;
+    game.round = 1;
+    game.questionsPerRound = QUESTIONS_PER_ROUND;
+    game.deadline = Date.now() + offset + QUESTION_TIME_MS;
+    delete game.submissions;
+    return game;
+  }, {applyLocally: false});
+};
 const deadline = state.deadline;
 document.querySelectorAll('[data-answer]').forEach(button => {
   button.onclick = async () => {
@@ -145,7 +191,7 @@ document.querySelectorAll('[data-answer]').forEach(button => {
     }
   };
 });
-const reset=document.getElementById('reset');if(reset)reset.onclick=()=>runTransaction(ref(db,'rooms/'+room),v=>{if(!v||v.host!==uid)return;v.phase='lobby';v.round=1;v.qnum=0;v.deck=shuffled();v.index=0;v.deadline=0;for(const p of Object.values(v.players||{})){p.active=true;p.points=0;p.ms=0;}return v;},{applyLocally:false});}
+const reset=document.getElementById('reset');if(reset)reset.onclick=()=>runTransaction(ref(db,'rooms/'+room),v=>{if(!v||v.host!==uid)return;v.phase='lobby';v.round=1;v.qnum=0;delete v.deck;v.index=0;v.deadline=0;for(const p of Object.values(v.players||{})){p.active=true;p.points=0;p.ms=0;}return v;},{applyLocally:false});}
 function phaseIsReady(game, now) {
   if (game.phase === 'finished') return false;
   if (game.phase === 'lobby') {

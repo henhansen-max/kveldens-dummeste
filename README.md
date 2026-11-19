@@ -18,7 +18,8 @@ Dette er en statisk GitHub Pages-side med Firebase Realtime Database og anonym i
 - Fem spørsmål per runde, med opptil 20 sekunder per spørsmål. Fasiten vises så snart alle aktive spillere har svart, eller når tiden går ut.
 - Den som får flest riktige, ryker ut. Ved likhet teller raskest svartid, deretter påloggingsrekkefølge.
 - Spillvertens telefon styrer tid og rundeskifter automatisk og må være pålogget.
-- Spillet har 40 originale spørsmål og er uoffisielt.
+- Verten velger Lett, Middels eller Vanskelig før start. Hvert nivå har 40 spørsmål, som trekkes uten gjentakelser i samme spill.
+- Spillet er uoffisielt.
 
 ## Begrensninger før offentlig bruk
 

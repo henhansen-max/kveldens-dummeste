@@ -15,7 +15,7 @@ Dette er en statisk GitHub Pages-side med Firebase Realtime Database og anonym i
 ## Spilleregler
 
 - 2–8 spillere. Felles romkode på seks tegn; hver telefon identifiseres av en unik anonym Firebase-bruker.
-- Tre spørsmål per runde, 20 sekunder per spørsmål.
+- Fem spørsmål per runde, med opptil 20 sekunder per spørsmål. Fasiten vises så snart alle aktive spillere har svart, eller når tiden går ut.
 - Den som får flest riktige, ryker ut. Ved likhet teller raskest svartid, deretter påloggingsrekkefølge.
 - Spillvertens telefon styrer tid og rundeskifter automatisk og må være pålogget.
 - Spillet har 40 originale spørsmål og er uoffisielt.
